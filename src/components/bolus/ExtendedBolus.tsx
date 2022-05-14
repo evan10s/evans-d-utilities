@@ -1,13 +1,6 @@
 import React, {useState} from 'react';
 import {Card, Form, InputNumber, PageHeader} from "antd";
 
-function prettyDuration(duration: number) {
-	const hoursFloor = Math.floor(duration)
-	const mins = Math.round((duration - hoursFloor) * 60)
-
-	return `${hoursFloor}:${mins} hrs`
-}
-
 type Bolus = {
 	extended: boolean
 	hours: number
