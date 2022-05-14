@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/evans-d-utilities/static/css/main.830cfe71.css",
+    "main.js": "/evans-d-utilities/static/js/main.48ed0be0.js",
+    "static/js/787.904c7b26.chunk.js": "/evans-d-utilities/static/js/787.904c7b26.chunk.js",
+    "index.html": "/evans-d-utilities/index.html",
+    "main.830cfe71.css.map": "/evans-d-utilities/static/css/main.830cfe71.css.map",
+    "main.48ed0be0.js.map": "/evans-d-utilities/static/js/main.48ed0be0.js.map",
+    "787.904c7b26.chunk.js.map": "/evans-d-utilities/static/js/787.904c7b26.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.830cfe71.css",
+    "static/js/main.48ed0be0.js"
+  ]
+}
