@@ -46,5 +46,8 @@
   },
   "devDependencies": {
     "jest": "^28.1.0"
+  },
+  "overrides": {
+    "autoprefixer": "10.4.5"
   }
 }
