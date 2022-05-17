@@ -74,8 +74,11 @@ function ExtendedBolus() {
 		carbs: 0,
 		correction: 0
 	})
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [carbs, setCarbs] = useState<number>(0)
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [carbRatio, setCarbRatio] = useState<number>(0)
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [carbsPerHour, setCarbsPerHour] = useState<number>(25)
 
 
