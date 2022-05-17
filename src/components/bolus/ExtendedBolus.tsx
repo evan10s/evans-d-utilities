@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Card, Form, InputNumber, PageHeader} from "antd";
+import {Col, Form, InputGroup, Row} from "react-bootstrap";
 
 type Bolus = {
 	extended: boolean
@@ -47,39 +47,90 @@ function calculateBoluses(carbs: number, carbRatio: number, carbsPerHour: number
 }
 
 function BolusCard(bolus: Bolus) {
-	return <Card title={"Bolus #1"}>
+	return <p title={"Bolus #1"}>
 		<p><strong>Duration:</strong> {bolus.hours}:{bolus.minutes} hrs</p>
-	</Card>;
+	</p>;
+}
+
+type TotalInsulin = {
+	carbs: number,
+	correction: number
+}
+
+type TotalInsulinKey = keyof TotalInsulin
+
+
+function calculateTotalInsulin(totalInsulin: TotalInsulin): number {
+	let total = 0;
+	for (const totalInsulinKey in totalInsulin) {
+		total += totalInsulin[totalInsulinKey as TotalInsulinKey]
+	}
+
+	return total;
 }
 
 function ExtendedBolus() {
+	const [totalInsulin, setTotalInsulin] = useState<TotalInsulin>({
+		carbs: 0,
+		correction: 0
+	})
 	const [carbs, setCarbs] = useState<number>(0)
 	const [carbRatio, setCarbRatio] = useState<number>(0)
 	const [carbsPerHour, setCarbsPerHour] = useState<number>(25)
 
+
+	function updateTotalInsulin(currentTotalInsulin: TotalInsulin, type: TotalInsulinKey, amount: string | number) {
+		if (typeof amount === "string") {
+			amount = Number.parseFloat(amount)
+		}
+		setTotalInsulin({
+			...currentTotalInsulin,
+			[type]: amount
+		})
+	}
+
 	const boluses = calculateBoluses(carbs, carbRatio, carbsPerHour)
 	return (
 		<>
-			<PageHeader title={"Extended bolus calculator"}/>
+			<h1>Extended bolus calculator</h1>
+			<p><small><strong>Disclaimer:</strong> This calculator was made for Evan. If you are not Evan, then the
+				results are
+				not guaranteed. No medical advice is being given. Ask medical questions to your doctor.
+			</small></p>
+			<h2>Bolus information</h2>
 
-			<Form name={"Extended bolus"}
-			      layout={"vertical"}
-			>
-				<Form.Item label="Carbs">
-					<InputNumber min={0} max={999} value={carbs || ""} onChange={(value) => setCarbs(value || 0)}/>
-				</Form.Item>
+			<p>Start by entering a regular bolus into the pump. View calculation details and enter the following
+				information:</p>
 
-				<Form.Item label="I:C ratio">
-					<InputNumber min={0} max={999} value={carbRatio || ""}
-					             onChange={(value) => setCarbRatio(value || 0)}/>
-				</Form.Item>
+			<Form>
+				<Form.Group as={Row} className="mb-3" controlId="insulin.carbs">
+					<Form.Label column xs={6} sm={6}>
+						Insulin for carbs
+					</Form.Label>
+					<Col xs={6} sm={6}>
+						<InputGroup>
+							<Form.Control type="number" min={0} max={25} value={totalInsulin.carbs || ""}
+							              onChange={(event) => updateTotalInsulin(totalInsulin, "carbs", event.target.value)}/>
+							<InputGroup.Text>u</InputGroup.Text>
+						</InputGroup>
+					</Col>
+				</Form.Group>
 
-				<Form.Item label="Carbs per hour">
-					<InputNumber min={0} max={999} value={carbsPerHour} onChange={setCarbsPerHour}/>
-					<p><small>The number of carbs you absorb per hour. Your diabetes may vary. Evan uses 25, so that's
-						the default.</small></p>
-				</Form.Item>
+				<Form.Group as={Row} className="mb-3" controlId="insulin.carbs">
+					<Form.Label column xs={6} sm={6}>
+						Insulin for correction
+					</Form.Label>
+					<Col xs={6} sm={6}>
+						<InputGroup>
+							<Form.Control type="number" min={0} max={25} value={totalInsulin.correction || ""}
+							              onChange={(event) => updateTotalInsulin(totalInsulin, "correction", event.target.value)}/>
+							<InputGroup.Text>u</InputGroup.Text>
+						</InputGroup>
+					</Col>
+				</Form.Group>
+				<p><strong>Total insulin:</strong> {calculateTotalInsulin(totalInsulin)} u</p>
 			</Form>
+
 			<div>
 				<h3>Results</h3>
 				{!boluses.length && <p>Based on your inputs, no boluses are required.</p>}

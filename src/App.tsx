@@ -1,35 +1,26 @@
 import React from 'react';
 import './App.css';
-import {Col, Layout, Row} from "antd";
 import ExtendedBolus from "./components/bolus/ExtendedBolus";
-import {Footer} from "antd/lib/layout/layout";
-
-const {Header, Content} = Layout;
+import {Col, Container, Nav, Navbar, Row} from "react-bootstrap";
 
 function App() {
-  return <>
-    <Layout className="layout">
-      <Header>
-        <div className="logo">Evan's D Utilities</div>
-      </Header>
-      <Content style={{padding: "10px 0", marginLeft: "auto", marginRight: "auto"}}>
-        <Row>
-          <Col>
-            <ExtendedBolus/>
-          </Col>
-        </Row>
-      </Content>
-      <Footer>
-        Disclaimer: This is a website for people with diabetes who know what they're doing.
-        There is no guarantee of accuracy or results from this website. If you use the information, calculations, or
-        results
-        on this website for insulin dosing, you do so at your own risk. Consider double-checking calculation results
-        yourself
-        using a calculator. The information, data, default values, and calculation results
-        are not intended as medical advice. If you want medical advice, ask your doctor.
-      </Footer>
-    </Layout>
-  </>
+	return <>
+		<Navbar bg="dark" variant="dark">
+			<Container>
+				<Navbar.Brand href="#home">Evan's D Utilities</Navbar.Brand>
+				<Nav className="me-auto">
+					<Nav.Link href="#home">Home</Nav.Link>
+				</Nav>
+			</Container>
+		</Navbar>
+		<Container>
+			<Row className="justify-content-md-center">
+				<Col sm={4} md={4}>
+					<ExtendedBolus/>
+				</Col>
+			</Row>
+		</Container>
+	</>
 }
 
 export default App;
