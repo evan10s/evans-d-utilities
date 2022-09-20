@@ -21,7 +21,7 @@ export function convertInsulinUnitsToMilliunits(input: string | number): number 
 		throw new RangeError(`Parsed input value ${parsed} u is a very large number of units of insulin. This is abnormal and very likely to be unsafe. Perhaps you passed in milliunits of insulin?`)
 	}
 
-	return parsed * INPUT_UNITS_TO_MILLIUNITS_CONVERSION;
+	return Math.round(parsed * INPUT_UNITS_TO_MILLIUNITS_CONVERSION);
 }
 
 export function convertInsulinMilliunitsToUnits(input: number): number {

@@ -20,6 +20,7 @@ function App() {
 				</Col>
 			</Row>
 		</Container>
+		<br/>
 	</>
 }
 
