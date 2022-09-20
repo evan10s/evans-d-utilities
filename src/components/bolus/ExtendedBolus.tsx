@@ -13,9 +13,15 @@ function hoursFromDuration(duration: number): number {
 	return Math.floor(duration);
 }
 
-function minutesFromDuration(duration: number): number {
-	const fractionalMins = duration - hoursFromDuration(duration)
-	return Math.round(fractionalMins * 60)
+function minutesFromDuration(duration: number): string {
+	const fractionalMins = duration - hoursFromDuration(duration);
+	const result = Math.round(fractionalMins * 60);
+
+	if (result < 10) {
+		return `0${result}`;
+	}
+
+	return `${result}`;
 }
 
 function calculateBoluses(carbs: number, carbsPerHour: number, totalInsulin_mu: BolusComponents): Bolus[] {
@@ -126,20 +132,11 @@ type BolusComponentsKey = keyof BolusComponents
 // }
 
 function calculateTotalInsulin(totalInsulin: BolusComponents): number {
-	let total = 0;
-
-	totalInsulin.correction = Math.max(0, totalInsulin.correction - totalInsulin.on_board)
-	totalInsulin.on_board = 0
-
-	for (const totalInsulinKey in totalInsulin) {
-		const key = totalInsulinKey as BolusComponentsKey;
-		total += totalInsulin[key];
-	}
-
-	return total;
+	return totalInsulin.carbs + Math.max(0, (totalInsulin.correction || 0) - (totalInsulin.on_board || 0));
 }
 
 function ExtendedBolus() {
+	// eslint-disable @typescript-eslint/no-unused-vars
 	const [totalInsulinInputs, setTotalInsulinInputs] = useState<BolusComponents>({
 		carbs: 0,
 		correction: 0,
@@ -153,11 +150,14 @@ function ExtendedBolus() {
 	const [carbs, setCarbs] = useState<number>(0)
 	// const [carbRatio, setCarbRatio] = useState<number>(0)
 	const [carbsPerHour, setCarbsPerHour] = useState<number>(0)
-
 	// const [totalDurationRaw, setRawTotalDuration] = useState<string>("")
 
 
 	function updateTotalInsulin(type: BolusComponentsKey, amount: string | number) {
+		if (!amount) {
+			amount = 0
+		}
+
 		if (typeof amount === "string") {
 			amount = Number.parseFloat(amount)
 		}
@@ -331,8 +331,8 @@ function ExtendedBolus() {
 				convertInsulinMilliunitsToUnits(boluses.reduce((prev, curr) => {
 					return +(prev + curr.totalUnits_mu).toFixed(3)
 				}, 0)).toFixed(2)
-			}&nbsp;u
-
+			}&nbsp;u <br/> <br/>
+				<Alert variant="danger">Validate results before using them to dose insulin!</Alert>
 			</div>
 		</>);
 }
