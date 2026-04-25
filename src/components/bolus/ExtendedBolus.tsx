@@ -1,10 +1,10 @@
-import React, {useState} from 'react';
+import {useState} from 'react';
 import {Alert, Col, Form, InputGroup, Row} from "react-bootstrap";
 import {convertInsulinMilliunitsToUnits, convertInsulinUnitsToMilliunits} from "../../util/InsulinUnitsHandler";
 import {
-	Bolus,
-	BolusComponents,
-	BolusComponentsKey,
+	type Bolus,
+	type BolusComponents,
+	type BolusComponentsKey,
 	calculateTotalInsulin,
 	hoursFromDuration,
 	minutesFromDuration

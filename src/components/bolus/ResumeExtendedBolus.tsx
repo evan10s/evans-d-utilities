@@ -1,7 +1,6 @@
-import React, {useState} from 'react';
 import {Alert, Col, Form, InputGroup, Row} from "react-bootstrap";
-import {convertInsulinMilliunitsToUnits, convertInsulinUnitsToMilliunits} from "../../util/InsulinUnitsHandler";
 import Disclaimer from "../Disclaimer";
+import {useState} from "react";
 
 /*
 

@@ -1,5 +1,4 @@
 import {Alert} from "react-bootstrap";
-import React from "react";
 
 function Disclaimer() {
     return <Alert variant="danger"><small><strong>Disclaimer: </strong>

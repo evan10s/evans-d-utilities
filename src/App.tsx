@@ -1,4 +1,3 @@
-import React from 'react';
 import './App.css';
 import ExtendedBolus from "./components/bolus/ExtendedBolus";
 import {Col, Container, Nav, Navbar, Row} from "react-bootstrap";
