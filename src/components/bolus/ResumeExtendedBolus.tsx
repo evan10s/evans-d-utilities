@@ -4,7 +4,6 @@ import {useState} from "react";
 import {DateTime} from "luxon";
 import {hoursFromDuration, minutesFromDuration} from "../../model/Bolus.ts";
 import {convertInsulinMilliunitsToUnits, convertInsulinUnitsToMilliunits} from "../../util/InsulinUnitsHandler.ts";
-import {BolusCard} from "./ExtendedBolus.tsx";
 
 /*
 
@@ -27,7 +26,11 @@ Calculate:
 
  */
 
-function convertToHrs(mins: number): number {
+function convertToHrs(mins: number | undefined): number {
+    if (typeof mins === "undefined") {
+        return -1;
+    }
+
     return mins / 60;
 }
 
@@ -184,6 +187,7 @@ function ResumeExtendedBolus() {
                     </Form.Label>
                     <Col xs={6} sm={6}>
                         <InputGroup>
+                            {/* @ts-expect-error-start TS2367 */}
                             <Form.Control type="number" step="1" value={originalDurationMins || ""}
                                           onChange={(event) => setOriginalDurationMins(event.target.value)}
                             />
@@ -220,10 +224,12 @@ function ResumeExtendedBolus() {
                 <Form.Group as={Row} className="mb-3">
                     <Form.Label column xs={6} sm={6}>
                         Extended DELIVERED amount <br/>
+                        {/* @ts-expect-error-start TS2367 */}
                         <small>Stored: {extendedAmtDelivered_u != "" ? convertInsulinUnitsToMilliunits(extendedAmtDelivered_u, true) : 0} mu</small>
                     </Form.Label>
                     <Col xs={6} sm={6}>
                         <InputGroup>
+                            {/* @ts-expect-error-start TS2345 */}
                             <Form.Control type="number" min={0} max={100} value={extendedAmtDelivered_u || ""}
                                           onChange={(event) => setExtendedAmtDelivered_u(event.target.value)}/>
                             <InputGroup.Text>u</InputGroup.Text>
@@ -233,10 +239,12 @@ function ResumeExtendedBolus() {
                 <Form.Group as={Row} className="mb-3">
                     <Form.Label column xs={6} sm={6}>
                         Extended TOTAL amount <br/>
+                        {/* @ts-expect-error TS2367 */}
                         <small>Stored: {totalExtended_u != "" ? convertInsulinUnitsToMilliunits(totalExtended_u, true) : 0} mu</small>
                     </Form.Label>
                     <Col xs={6} sm={6}>
                         <InputGroup>
+                            {/* @ts-expect-error-start TS2345 */}
                             <Form.Control type="number" min={0} max={100} value={totalExtended_u || ""}
                                           onChange={(event) => setTotalExtended_u(event.target.value)}/>
                             <InputGroup.Text>u</InputGroup.Text>
@@ -249,8 +257,10 @@ function ResumeExtendedBolus() {
             <div>
                 {result.error ? <Alert variant="danger">{result.error}</Alert> :
                     <ul>
+                        {/* @ts-expect-error TS18048 */}
                         <li>Total insulin: {result.newTotalAmount_u.toFixed(2)} u</li>
                         <li>Extended</li>
+                        {/* @ts-expect-error TS2345 */}
                         <li>Now percent: {(result.newPercentNow * 100).toFixed(0)}%</li>
                         <li>Duration
                             (mins): {hoursFromDuration(convertToHrs(result.newDurationMins))}:{minutesFromDuration(convertToHrs(result.newDurationMins))} hrs
