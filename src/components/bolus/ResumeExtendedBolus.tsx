@@ -188,8 +188,7 @@ function ResumeExtendedBolus() {
                     <Col xs={6} sm={6}>
                         <InputGroup>
                             {/* @ts-expect-error-start TS2367 */}
-                            <Form.Control type="number" step="1" value={originalDurationMins || ""}
-                                          onChange={(event) => setOriginalDurationMins(event.target.value)}
+                            <Form.Control type="number" step="1" value={originalDurationMins || ""} onChange={(event) => setOriginalDurationMins(event.target.value)}
                             />
                             <InputGroup.Text>mins</InputGroup.Text>
                         </InputGroup>
@@ -230,8 +229,7 @@ function ResumeExtendedBolus() {
                     <Col xs={6} sm={6}>
                         <InputGroup>
                             {/* @ts-expect-error-start TS2345 */}
-                            <Form.Control type="number" min={0} max={100} value={extendedAmtDelivered_u || ""}
-                                          onChange={(event) => setExtendedAmtDelivered_u(event.target.value)}/>
+                            <Form.Control type="number" min={0} max={100} value={extendedAmtDelivered_u || ""} onChange={(event) => setExtendedAmtDelivered_u(event.target.value)}/>
                             <InputGroup.Text>u</InputGroup.Text>
                         </InputGroup>
                     </Col>
@@ -245,8 +243,7 @@ function ResumeExtendedBolus() {
                     <Col xs={6} sm={6}>
                         <InputGroup>
                             {/* @ts-expect-error-start TS2345 */}
-                            <Form.Control type="number" min={0} max={100} value={totalExtended_u || ""}
-                                          onChange={(event) => setTotalExtended_u(event.target.value)}/>
+                            <Form.Control type="number" min={0} max={100} value={totalExtended_u || ""} onChange={(event) => setTotalExtended_u(event.target.value)}/>
                             <InputGroup.Text>u</InputGroup.Text>
                         </InputGroup>
                     </Col>
