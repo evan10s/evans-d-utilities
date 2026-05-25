@@ -31,13 +31,11 @@ jobs:
           node-version: 24.x
           cache: 'npm'
       - run: npm run predeploy
-      - name: Print folder tree
-        uses: jaywcjlove/github-action-folder-tree@v1.3.0
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4.8.0
         with:
           branch: gh-pages
-          folder: ./build
+          folder: dist
 
 
 
