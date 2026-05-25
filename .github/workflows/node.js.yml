@@ -32,10 +32,10 @@ jobs:
           cache: 'npm'
       - run: npm run predeploy
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4.8.0
+        uses: JamesIves/github-pages-deploy-action@v4.3.3
         with:
           branch: gh-pages
-          folder: ../build
+          folder: build
 
 
 
