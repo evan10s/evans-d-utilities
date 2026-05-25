@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
+    "luxon": "^3.7.2",
     "react": "^19.2.5",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.5",
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

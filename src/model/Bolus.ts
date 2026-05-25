@@ -5,12 +5,12 @@ export type Bolus = {
     nowPercent: number
 }
 
-export function hoursFromDuration(duration: number): number {
-    return Math.floor(duration);
+export function hoursFromDuration(durationHrs: number): number {
+    return Math.floor(durationHrs);
 }
 
-export function minutesFromDuration(duration: number): string {
-    const fractionalMins = duration - hoursFromDuration(duration);
+export function minutesFromDuration(durationHrs: number): string {
+    const fractionalMins = durationHrs - hoursFromDuration(durationHrs);
     const result = Math.round(fractionalMins * 60);
 
     if (result < 10) {

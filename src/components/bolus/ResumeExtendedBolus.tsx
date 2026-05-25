@@ -1,6 +1,10 @@
 import {Alert, Col, Form, InputGroup, Row} from "react-bootstrap";
 import Disclaimer from "../Disclaimer";
 import {useState} from "react";
+import {DateTime} from "luxon";
+import {hoursFromDuration, minutesFromDuration} from "../../model/Bolus.ts";
+import {convertInsulinMilliunitsToUnits, convertInsulinUnitsToMilliunits} from "../../util/InsulinUnitsHandler.ts";
+import {BolusCard} from "./ExtendedBolus.tsx";
 
 /*
 
@@ -23,39 +27,125 @@ Calculate:
 
  */
 
+function convertToHrs(mins: number): number {
+    return mins / 60;
+}
+
+function calculateResult(
+    nowFinishTime: DateTime | null,
+    originalDurationMins: number | null,
+    cancelTime: DateTime | null,
+    resumeTime: DateTime | null,
+    extendedAmtDelivered_u: number,
+    totalExtended_u: number
+) {
+    if (!nowFinishTime || !originalDurationMins || !cancelTime || !resumeTime) {
+        return {error: "At least one required time field is empty/invalid"};
+    }
+
+    if (resumeTime < cancelTime) {
+        return {error: "Resume time must be after cancel time"};
+    }
+
+    if (resumeTime < nowFinishTime) {
+        return {error: "Resume time must be after the \"now\" bolus finish time"};
+    }
+
+    if (cancelTime < nowFinishTime) {
+        return {error: "Cancel time must be after the \"now\" bolus finish time"};
+    }
+
+
+    if (extendedAmtDelivered_u < 0 || totalExtended_u < 0) {
+        return {error: "Amounts of insulin should be positive"};
+    }
+
+    if (originalDurationMins > 8 * 60) {
+        return {error: "Original extended duration is greater than 8 hours"}
+    }
+
+    if (totalExtended_u <= 0) {
+        return {error: "Total extended amount must be greater than zero"}
+    }
+
+    if (totalExtended_u <= extendedAmtDelivered_u) {
+        console.log("totalExtended_u", totalExtended_u)
+        console.log("extendedAmtDelivered_u", extendedAmtDelivered_u)
+
+        return {error: "The extended bolus amount delivered can't be greater than the total extended amount"}
+    }
+
+    try {
+        const originalEndTime = nowFinishTime.plus({minutes: originalDurationMins});
+        const timeRemainingAtCancellation = originalEndTime.diff(cancelTime, "minutes").minutes;
+        const timeRemainingFromResumption = originalEndTime.diff(resumeTime, "minutes").minutes;
+
+        const amountRemaining_mu = convertInsulinUnitsToMilliunits(totalExtended_u) - convertInsulinUnitsToMilliunits(extendedAmtDelivered_u);
+
+        const timeMissed = resumeTime.diff(cancelTime, "minutes").minutes;
+        const newPercentNow = timeMissed / timeRemainingAtCancellation;
+        const newDurationMins = timeRemainingFromResumption;
+
+        if (timeRemainingAtCancellation <= 0) {
+            return {error: "Extended bolus cancellation time is after the original extended bolus end time"}
+        }
+
+        if (timeRemainingFromResumption <= 0) {
+            return {error: "Extended bolus resumption is after the original extended bolus end time"}
+        }
+
+        if (timeRemainingAtCancellation < 15 || timeRemainingFromResumption < 15) {
+            return {error: "Extended bolus can't be resumed because it would have less than 15 minutes remaining"}
+        }
+
+        if (amountRemaining_mu < 0) {
+            return {error: "Calculated amount of insulin remaining is negative"}
+        }
+        const newTotalAmount_u = convertInsulinMilliunitsToUnits(amountRemaining_mu);
+
+        if (newTotalAmount_u < .4) {
+            return {error: "Extended bolus can't be resumed beacuse the amount of insulin remaining is less than 0.4 u"}
+        }
+
+        return {
+            originalEndTime,
+            timeRemainingAtCancellation,
+            timeRemainingFromResumption,
+            amountRemaining_mu,
+            timeMissed,
+            newPercentNow,
+            newDurationMins,
+            newTotalAmount_u
+        }
+    } catch (e: unknown) {
+        return {error: `Unhandled error computing result: ${e}`}
+    }
+}
+
 function ResumeExtendedBolus() {
-    const [nowFinishTime, setNowFinishTime] = useState<any>(0)
+    const [nowFinishTime, setNowFinishTime] = useState<DateTime | null>(null);
+    const [originalDurationMins, setOriginalDurationMins] = useState<number | null>(null);
+    const [cancelTime, setCancelTime] = useState<DateTime | null>(null);
+    const [resumeTime, setResumeTime] = useState<DateTime | null>(null);
+    const [extendedAmtDelivered_u, setExtendedAmtDelivered_u] = useState<number>(0);
+    const [totalExtended_u, setTotalExtended_u] = useState<number>(0);
+
+    const result = calculateResult(
+        nowFinishTime,
+        originalDurationMins,
+        cancelTime,
+        resumeTime,
+        extendedAmtDelivered_u,
+        totalExtended_u,
+    )
 
     return (
         <>
             <h1>Resume cancelled extended bolus calculator</h1>
             <Disclaimer/>
 
-            <h2>Timing information</h2>
-            <Alert variant="warning"><strong>Warning:</strong> The total extended bolus duration must be less than or
-                equal to 8 hours.</Alert>
-
-            <p>Enter the following timing information for the extended bolus</p>
-
-            {nowFinishTime}
-            <Form>
-                <Form.Group as={Row} className="mb-3" controlId="carbs">
-                    <Form.Label column xs={6} sm={6}>
-                        "Now" bolus finish time<br/>
-                    </Form.Label>
-                    <Col xs={6} sm={6}>
-                        <InputGroup>
-                            <Form.Control type="time" value={nowFinishTime || ""}
-                                          onChange={(event) => setNowFinishTime(event.target.value)}
-                            />
-                        </InputGroup>
-                    </Col>
-                </Form.Group>
-            </Form>
             <h2>Bolus information</h2>
-
-            <p>Start by entering a regular bolus into the pump. View calculation details and enter the following
-                information:</p>
+            <p>Enter the following timing information for the extended bolus</p>
 
             <Alert variant="info">
                 <strong>Note:</strong> Enter <strong>positive</strong> numbers for all values!
@@ -72,70 +162,101 @@ function ResumeExtendedBolus() {
                 insulin pump.
             </Alert>
 
-            {/*<Form>*/}
-            {/*	<Form.Group as={Row} className="mb-3" controlId="carbs">*/}
-            {/*		<Form.Label column xs={6} sm={6}>*/}
-            {/*			Number of carbs <br/>*/}
-            {/*		</Form.Label>*/}
-            {/*		<Col xs={6} sm={6}>*/}
-            {/*			<InputGroup>*/}
-            {/*				<Form.Control type="number" min={0} max={99} value={carbs || ""}*/}
-            {/*				              onChange={(event) => setCarbs(Number.parseInt(event.target.value))}/>*/}
-            {/*				<InputGroup.Text>g</InputGroup.Text>*/}
-            {/*			</InputGroup>*/}
-            {/*		</Col>*/}
-            {/*	</Form.Group>*/}
-
-            {/*	<Form.Group as={Row} className="mb-3" controlId="insulin.correction">*/}
-            {/*		<Form.Label column xs={6} sm={6}>*/}
-            {/*			Insulin for correction <br/>*/}
-            {/*			<small>Stored: {totalInsulin_mu.correction} mu</small>*/}
-            {/*		</Form.Label>*/}
-            {/*		<Col xs={6} sm={6}>*/}
-            {/*			<InputGroup>*/}
-            {/*				<Form.Control type="number" min={0} max={25} value={totalInsulinInputs.correction || ""}*/}
-            {/*				              onChange={(event) => updateTotalInsulin("correction", event.target.value)}/>*/}
-            {/*				<InputGroup.Text>u</InputGroup.Text>*/}
-            {/*			</InputGroup>*/}
-            {/*		</Col>*/}
-            {/*	</Form.Group>*/}
-
-            {/*	<Form.Group as={Row} className="mb-3" controlId="insulin.carbs">*/}
-            {/*		<Form.Label column xs={6} sm={6}>*/}
-            {/*			Insulin for carbs <br/>*/}
-            {/*			<small>Stored: {totalInsulin_mu.carbs} mu</small>*/}
-            {/*		</Form.Label>*/}
-            {/*		<Col xs={6} sm={6}>*/}
-            {/*			<InputGroup>*/}
-            {/*				<Form.Control type="number" min={0} max={25} value={totalInsulinInputs.carbs || ""}*/}
-            {/*				              onChange={(event) => updateTotalInsulin("carbs", event.target.value)}/>*/}
-            {/*				<InputGroup.Text>u</InputGroup.Text>*/}
-            {/*			</InputGroup>*/}
-            {/*		</Col>*/}
-            {/*	</Form.Group>*/}
-
-            {/*	<Form.Group as={Row} className="mb-3" controlId="insulin.on_board">*/}
-            {/*		<Form.Label column xs={6} sm={6}>*/}
-            {/*			Insulin on board <br/>*/}
-            {/*			<small>Stored: {totalInsulin_mu.on_board} mu</small>*/}
-            {/*		</Form.Label>*/}
-            {/*		<Col xs={6} sm={6}>*/}
-            {/*			<InputGroup>*/}
-            {/*				<Form.Control type="number" min={0} max={100} value={totalInsulinInputs.on_board || ""}*/}
-            {/*				              onChange={(event) => updateTotalInsulin("on_board", event.target.value)}/>*/}
-            {/*				<InputGroup.Text>u</InputGroup.Text>*/}
-            {/*			</InputGroup>*/}
-            {/*		</Col>*/}
-            {/*	</Form.Group>*/}
-            {/*	<p>*/}
-            {/*		<strong>Total*/}
-            {/*			insulin:</strong> {convertInsulinMilliunitsToUnits(calculateTotalInsulin(totalInsulin_mu)).toFixed(2)} u <br/>*/}
-            {/*		<small>Raw: {calculateTotalInsulin(totalInsulin_mu)} mu</small>*/}
-            {/*	</p>*/}
-            {/*</Form>*/}
+            <Form>
+                <Form.Group as={Row} className="mb-3">
+                    <Form.Label column xs={6} sm={6}>
+                        "Now" bolus finish time<br/>
+                        {nowFinishTime ? <small>Stored: {nowFinishTime.toFormat("h:mm a")}</small> : ""}
+                    </Form.Label>
+                    <Col xs={6} sm={6}>
+                        <InputGroup>
+                            <Form.Control type="time" value={nowFinishTime ? nowFinishTime.toFormat("HH:mm") : ""}
+                                          onChange={(event) => setNowFinishTime(DateTime.fromFormat(event.target.value, "HH:mm"))}
+                            />
+                        </InputGroup>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} className="mb-3">
+                    <Form.Label column xs={6} sm={6}>
+                        Original extended duration<br/>
+                        {originalDurationMins ?
+                            <small>Stored: {hoursFromDuration(convertToHrs(originalDurationMins))}:{minutesFromDuration(convertToHrs(originalDurationMins))} hrs</small> : ""}
+                    </Form.Label>
+                    <Col xs={6} sm={6}>
+                        <InputGroup>
+                            <Form.Control type="number" step="1" value={originalDurationMins || ""}
+                                          onChange={(event) => setOriginalDurationMins(event.target.value)}
+                            />
+                            <InputGroup.Text>mins</InputGroup.Text>
+                        </InputGroup>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} className="mb-3">
+                    <Form.Label column xs={6} sm={6}>
+                        Cancellation time<br/>
+                        {cancelTime ? <small>Stored: {cancelTime.toFormat("h:mm a")}</small> : ""}
+                    </Form.Label>
+                    <Col xs={6} sm={6}>
+                        <InputGroup>
+                            <Form.Control type="time" value={cancelTime ? cancelTime.toFormat("HH:mm") : ""}
+                                          onChange={(event) => setCancelTime(DateTime.fromFormat(event.target.value, "HH:mm"))}
+                            />
+                        </InputGroup>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} className="mb-3">
+                    <Form.Label column xs={6} sm={6}>
+                        Resume time<br/>
+                        {resumeTime ? <small>Stored: {resumeTime.toFormat("h:mm a")}</small> : ""}
+                    </Form.Label>
+                    <Col xs={6} sm={6}>
+                        <InputGroup>
+                            <Form.Control type="time" value={resumeTime ? resumeTime.toFormat("HH:mm") : ""}
+                                          onChange={(event) => setResumeTime(DateTime.fromFormat(event.target.value, "HH:mm"))}
+                            />
+                        </InputGroup>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} className="mb-3">
+                    <Form.Label column xs={6} sm={6}>
+                        Extended DELIVERED amount <br/>
+                        <small>Stored: {extendedAmtDelivered_u != "" ? convertInsulinUnitsToMilliunits(extendedAmtDelivered_u, true) : 0} mu</small>
+                    </Form.Label>
+                    <Col xs={6} sm={6}>
+                        <InputGroup>
+                            <Form.Control type="number" min={0} max={100} value={extendedAmtDelivered_u || ""}
+                                          onChange={(event) => setExtendedAmtDelivered_u(event.target.value)}/>
+                            <InputGroup.Text>u</InputGroup.Text>
+                        </InputGroup>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} className="mb-3">
+                    <Form.Label column xs={6} sm={6}>
+                        Extended TOTAL amount <br/>
+                        <small>Stored: {totalExtended_u != "" ? convertInsulinUnitsToMilliunits(totalExtended_u, true) : 0} mu</small>
+                    </Form.Label>
+                    <Col xs={6} sm={6}>
+                        <InputGroup>
+                            <Form.Control type="number" min={0} max={100} value={totalExtended_u || ""}
+                                          onChange={(event) => setTotalExtended_u(event.target.value)}/>
+                            <InputGroup.Text>u</InputGroup.Text>
+                        </InputGroup>
+                    </Col>
+                </Form.Group>
+            </Form>
 
             <h2>Results</h2>
             <div>
+                {result.error ? <Alert variant="danger">{result.error}</Alert> :
+                    <ul>
+                        <li>Total insulin: {result.newTotalAmount_u.toFixed(2)} u</li>
+                        <li>Extended</li>
+                        <li>Now percent: {(result.newPercentNow * 100).toFixed(0)}%</li>
+                        <li>Duration
+                            (mins): {hoursFromDuration(convertToHrs(result.newDurationMins))}:{minutesFromDuration(convertToHrs(result.newDurationMins))} hrs
+                        </li>
+                    </ul>
+                }
 
                 <Alert variant="danger">Validate results before using them to dose insulin!</Alert>
             </div>

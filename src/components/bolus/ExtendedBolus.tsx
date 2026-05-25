@@ -78,7 +78,7 @@ function calculateBoluses(carbs: number, carbsPerHour: number, totalInsulin_mu: 
 	return result;
 }
 
-function BolusCard(bolus: Bolus, idx: number) {
+export function BolusCard(bolus: Bolus, idx: number) {
 	const duration_hrs = bolus.duration_mins / 60;
 	return <div>
 		<p><strong>{bolus.extended && "Extended"} Bolus #{idx + 1}</strong></p>
