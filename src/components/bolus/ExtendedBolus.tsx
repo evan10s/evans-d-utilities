@@ -1,28 +1,14 @@
-import React, {useState} from 'react';
+import {useState} from 'react';
 import {Alert, Col, Form, InputGroup, Row} from "react-bootstrap";
 import {convertInsulinMilliunitsToUnits, convertInsulinUnitsToMilliunits} from "../../util/InsulinUnitsHandler";
-
-type Bolus = {
-	extended: boolean
-	duration_mins: number
-	totalUnits_mu: number
-	nowPercent: number
-}
-
-function hoursFromDuration(duration: number): number {
-	return Math.floor(duration);
-}
-
-function minutesFromDuration(duration: number): string {
-	const fractionalMins = duration - hoursFromDuration(duration);
-	const result = Math.round(fractionalMins * 60);
-
-	if (result < 10) {
-		return `0${result}`;
-	}
-
-	return `${result}`;
-}
+import {
+	type Bolus,
+	type BolusComponents,
+	type BolusComponentsKey,
+	calculateTotalInsulin,
+	hoursFromDuration,
+	minutesFromDuration
+} from "../../model/Bolus";
 
 function calculateBoluses(carbs: number, carbsPerHour: number, totalInsulin_mu: BolusComponents): Bolus[] {
 	if (carbs === 0 ||
@@ -92,7 +78,7 @@ function calculateBoluses(carbs: number, carbsPerHour: number, totalInsulin_mu: 
 	return result;
 }
 
-function BolusCard(bolus: Bolus, idx: number) {
+export function BolusCard(bolus: Bolus, idx: number) {
 	const duration_hrs = bolus.duration_mins / 60;
 	return <div>
 		<p><strong>{bolus.extended && "Extended"} Bolus #{idx + 1}</strong></p>
@@ -105,35 +91,6 @@ function BolusCard(bolus: Bolus, idx: number) {
 	</div>;
 }
 
-type BolusComponents = {
-	carbs: number,
-	correction: number,
-	on_board: number,
-}
-
-type BolusComponentsKey = keyof BolusComponents
-
-// function parseRawDurationToMins(text: string): number {
-// 	if (text.match(/^[0-8]:\d{2}$/)) {
-// 		const [hoursStr, minsStr] = text.split(":", 2)
-// 		console.log(text)
-// 		const hours = Number.parseInt(hoursStr)
-// 		const mins = Number.parseInt(minsStr)
-//
-// 		if (mins > 59 ||
-// 			(hours === 8 && mins > 0)) {
-// 			return 0
-// 		}
-//
-// 		return hours * 60 + mins
-// 	}
-//
-// 	return 0
-// }
-
-function calculateTotalInsulin(totalInsulin: BolusComponents): number {
-	return totalInsulin.carbs + Math.max(0, (totalInsulin.correction || 0) - (totalInsulin.on_board || 0));
-}
 
 function ExtendedBolus() {
 	// eslint-disable @typescript-eslint/no-unused-vars
@@ -149,7 +106,8 @@ function ExtendedBolus() {
 	})
 	const [carbs, setCarbs] = useState<number>(0)
 	// const [carbRatio, setCarbRatio] = useState<number>(0)
-	const [carbsPerHour, setCarbsPerHour] = useState<number>(0)
+	const [carbsPerHour,
+		setCarbsPerHour] = useState<number>(0)
 	// const [totalDurationRaw, setRawTotalDuration] = useState<string>("")
 
 
@@ -192,19 +150,6 @@ function ExtendedBolus() {
 			<h2>Dose parameters</h2>
 			<p>What are your current values for:</p>
 			<Form>
-				{/*<Form.Group as={Row} className="mb-3" controlId="setting.carb_ratio">*/}
-				{/*	<Form.Label column xs={6} sm={6}>*/}
-				{/*		I:C ratio*/}
-				{/*	</Form.Label>*/}
-				{/*	<Col xs={6} sm={6}>*/}
-				{/*		<InputGroup>*/}
-				{/*			<InputGroup.Text>1u : </InputGroup.Text>*/}
-				{/*			<Form.Control type="number" min={0} max={999} value={carbRatio || ""}*/}
-				{/*			              onChange={(event) => setCarbRatio(Number.parseFloat(event.target.value))}/>*/}
-				{/*			<InputGroup.Text>g</InputGroup.Text>*/}
-				{/*		</InputGroup>*/}
-				{/*	</Col>*/}
-				{/*</Form.Group>*/}
 				<Form.Group as={Row} className="mb-3" controlId="setting.carbs_per_hour">
 					<Form.Label column xs={6} sm={6}>
 						Carbs absorbed per hour
@@ -301,24 +246,6 @@ function ExtendedBolus() {
 					<small>Raw: {calculateTotalInsulin(totalInsulin_mu)} mu</small>
 				</p>
 			</Form>
-
-			{/*<h2>Extension parameters</h2>*/}
-			{/*<Form>*/}
-			{/*	<Form.Group as={Row} className="mb-3" controlId="total_duration">*/}
-			{/*		<Form.Label column xs={6} sm={6}>*/}
-			{/*			Total desired extension length (h:mm) <em>(max 8:00 hrs)</em><br/>*/}
-			{/*			<small>Stored: {parseRawDurationToMins(totalDurationRaw)} mins</small>*/}
-			{/*		</Form.Label>*/}
-			{/*		<Col xs={6} sm={6}>*/}
-			{/*			<InputGroup>*/}
-			{/*				<Form.Control type="text" value={totalDurationRaw || ""} maxLength={4}*/}
-			{/*				              onChange={(event) => setRawTotalDuration(event.target.value)}/>*/}
-			{/*				<InputGroup.Text>hrs</InputGroup.Text>*/}
-			{/*			</InputGroup>*/}
-			{/*		</Col>*/}
-			{/*	</Form.Group>*/}
-			{/*</Form>*/}
-
 
 			<h2>Results</h2>
 			<div>
